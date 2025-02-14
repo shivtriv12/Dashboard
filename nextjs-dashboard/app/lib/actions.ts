@@ -131,3 +131,98 @@ export async function authenticate(
     throw error;
   }
 }
+
+const CustomerSchema = z.object({
+  name: z.string({
+    required_error: 'Please provide a customer name.',
+  }),
+  email: z.string().email({ message: 'Invalid email address.' }),
+  imageUrl: z.string({
+    required_error: 'Please provide an image URL.',
+  }),
+});
+
+export type StateC = {
+  errors?: {
+    name?: string[];
+    email?: string[];
+    imageUrl?: string[];
+  };
+  message?: string | null;
+};
+
+export async function createCustomer(prevState: StateC, formData: FormData) {
+  // Validate form data using Zod
+  const validatedFields = CustomerSchema.safeParse({
+    name: formData.get('name'),
+    email: formData.get('email'),
+    imageUrl: formData.get('imageUrl'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Customer.',
+    };
+  }
+
+  // Destructure validated fields
+  const { name, email, imageUrl } = validatedFields.data;
+
+  // Insert customer data into the database
+  try {
+    await sql`
+      INSERT INTO customers (name, email, image_url)
+      VALUES (${name}, ${email}, ${imageUrl})
+    `;
+  } catch (error) {
+    console.error(error);
+    return {
+      message: 'Database Error: Failed to Create Customer.',
+    };
+  }
+
+  // Revalidate the customers page cache and redirect to the customers dashboard.
+  revalidatePath('/dashboard/customers');
+  redirect('/dashboard/customers');
+}
+
+export async function updateCustomer(
+  id: string,
+  prevState: StateC,
+  formData: FormData,
+) {
+  const validatedFields = CustomerSchema.safeParse({
+    name: formData.get('name'),
+    email: formData.get('email'),
+    imageUrl: formData.get('imageUrl'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Customer.',
+    };
+  }
+
+  const { name, email, imageUrl } = validatedFields.data;
+
+  try {
+    await sql`
+      UPDATE customers
+      SET name = ${name}, email = ${email}, image_url = ${imageUrl}
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    console.log(error);
+    return { message: 'Database Error: Failed to Update Customer.' };
+  }
+
+  revalidatePath('/dashboard/customers');
+  redirect('/dashboard/customers');
+}
+
+export async function deleteCustomer(id: string) {
+  await sql`DELETE FROM customers WHERE id = ${id}`;
+  revalidatePath('/dashboard/customers');
+}
