@@ -16,11 +16,9 @@ export default function Page() {
           className="relative w-0 h-0 border-l-[15px] border-r-[15px] border-b-[26px] border-l-transparent border-r-transparent border-b-black"
         />
           <p className={`text-xl text-gray-800 md:text-3xl md:leading-normal ${lusitana.className} antialiased`}>
-            <strong>Welcome to Financial Dashboard.</strong> In this i am practising {' '}
-            <a href="https://nextjs.org/learn/" className="text-blue-500">
-              nextjs.
-            </a>
+            <strong>Welcome to Financial Dashboard.</strong> 
             Email: user@nextmail.com
+            <br/>
             Password: 123456
           </p>
           <Link
